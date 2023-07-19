@@ -4,7 +4,7 @@ defined('ABSPATH') or die("No access please!");
 
 /* Plugin Name: Woocommerce M-PESA Payment Gateway (Vodacom)
 
-* Description: Vodacom M-PESA Payment Gateway for woocommerce from Mozambique.
+* Description: Vodacom M-PESA Payment Gateway for Woocommerce from Mozambique.
 
 * Version: 1.0.0
 
@@ -27,7 +27,6 @@ add_action( 'wp_enqueue_scripts', 'woompesa_adds_to_the_head' ); // Add Styles a
 
 
 function woompesa_adds_to_the_head() {
-    wp_enqueue_script('axios', plugin_dir_url(__FILE__) . '/script/axios.js',  array('jquery'));
     wp_enqueue_script('sweetalert', plugin_dir_url(__FILE__) . '/script/sweetalert2.all.min.js',  array('jquery'));
 	wp_enqueue_script('Callbacks', plugin_dir_url(__FILE__) . '/script/process_payment.js', array('jquery'));
 	wp_enqueue_style( 'Responses', plugin_dir_url(__FILE__) . '/style/display.css',false,'1.1','all');

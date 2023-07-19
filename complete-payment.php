@@ -22,7 +22,7 @@
         if($insert and $complete_payment){
             echo json_encode(["response" =>  $insert]);
         }else{
-            throw new Error('Erro ao Salvar os dados', '500');
+            throw new Error('Erro ao guardar os dados', '500');
         }
     }
 

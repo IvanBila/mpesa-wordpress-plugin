@@ -29,11 +29,10 @@ class ValidationHelper
      *      * +258(84|85)xxxxxxx
      *      * 00258(84|85)xxxxxxx
      *
-     * @param string $msisdn msisdn which will be validated and normalized afterwards.
+     * @param string $msisdn msisdn which will be validated and normalized afterward.
      * @return string normalized phone number: 258(84|85)xxxxxxx
-     * @throws Exception
      */
-    public static function normalizeMSISDN($msisdn)
+    public static function normalizeMSISDN(string $msisdn): string
     {
         // $matchGroup array contains 5 pairs:
         // – [0] -> the full match.
@@ -45,15 +44,10 @@ class ValidationHelper
         $isValid = preg_match('/^(\+|00)?(258)?((84|85)\d{7})$/', $msisdn, $matchGroup);
 
         if ($isValid) {
-            // $match = $matchGroup[0];
-            // $containsPlusOrZeroZero = $matchGroup[1] != null;
-            // $containsCountryCode    = $matchGroup[2] != null;
-            // $containsLocalPrefix    = $matchGroup[4] != null;
             $matchedPhoneNumber = $matchGroup[3];
-            $normalizedPhoneNumber = "258" . $matchedPhoneNumber;
-            return $normalizedPhoneNumber;
+            return "258$matchedPhoneNumber";
         } else {
-            throw new Exception("The provided number " . $msisdn . " is not valid Vodacom MSISDN.");
+            throw new Exception("The provided number $msisdn is not valid Vodacom MSISDN.");
         }
     }
 }

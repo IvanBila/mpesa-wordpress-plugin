@@ -18,7 +18,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     $numero =  $data['numero'];
     $decrypted_data =  json_decode(base64_decode($data['encrypted_data']));
 
-    if( $numero != '' and $decrypted_data != ''){
+    if($numero != '' && $decrypted_data != ''){
         $config = new \abdulmueid\mpesa\Config(
             $decrypted_data->public_key,
             $decrypted_data->api_endpoint,
@@ -38,7 +38,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
         echo json_encode($pagamento);
     }else{
-        throw new Error('Dados nao validados', '500');
+        throw new Error('Dados não validados', '500');
     }
 
     exit();

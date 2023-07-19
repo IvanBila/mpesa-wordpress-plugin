@@ -36,15 +36,6 @@ class Transaction implements TransactionInterface
         $this->config = $config;
     }
 
-    /**
-     * Initiates a C2B transaction on the M-Pesa API.
-     * @param float $amount
-     * @param string $msisdn
-     * @param string $reference
-     * @param string $third_party_reference
-     * @return TransactionResponseInterface
-     * @throws Exception
-     */
     public function c2b(
         float $amount,
         string $msisdn,
@@ -66,10 +57,7 @@ class Transaction implements TransactionInterface
             'https://' . $this->config->getApiHost() . ':18352/ipg/v1x/c2bPayment/singleStage/'
         );
         curl_setopt($request_handle,CURLOPT_PROXYTYPE,CURLPROXY_HTTP);
-        // curl_setopt($request_handle,CURLOPT_PROXY,'https://ultra.co.mz');
-        // curl_setopt($ch, CURLOPT_PROXYPORT, "80");
         curl_setopt($request_handle,CURLOPT_SSL_VERIFYPEER,false);
-        // curl_setopt($request_handle, CURLOPT_FOLLOWLOCATION, 1)
         curl_setopt ($request_handle, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($request_handle, CURLOPT_VERBOSE, 1);
         curl_setopt($request_handle,CURLOPT_TIMEOUT,120);
@@ -87,20 +75,8 @@ class Transaction implements TransactionInterface
             return curl_error($request_handle);
         else
             return  $result;
-        
-        
-//        return new TransactionResponse($result);
     }
 
-    /**
-     * Initiates a B2C transaction on the M-Pesa API.
-     * @param float $amount
-     * @param string $msisdn
-     * @param string $reference
-     * @param string $third_party_reference
-     * @return TransactionResponseInterface
-     * @throws Exception
-     */
     public function b2c(
         float $amount,
         string $msisdn,
@@ -134,14 +110,6 @@ class Transaction implements TransactionInterface
         return new TransactionResponse($result);
     }
 
-    /**
-     * Initiates a B2B transaction on the M-Pesa API.
-     * @param float $amount
-     * @param string $receiver_party_code
-     * @param string $reference
-     * @param string $third_party_reference
-     * @return TransactionResponseInterface
-     */
     public function b2b(
         float $amount,
         string $receiver_party_code,
@@ -174,12 +142,6 @@ class Transaction implements TransactionInterface
         return new TransactionResponse($result);
     }
 
-    /**
-     * Initiates a Reversal transaction on the M-Pesa API.
-     * @param float $amount
-     * @param string $transaction_id
-     * @return TransactionResponseInterface
-     */
     public function reversal(
         float $amount,
         string $transaction_id,
@@ -212,12 +174,6 @@ class Transaction implements TransactionInterface
         return new TransactionResponse($result);
     }
 
-    /**
-     * Initiates a transaction Query on the M-Pesa API.
-     * @param string $query_reference
-     * @param string $third_party_reference
-     * @return TransactionResponseInterface
-     */
     public function query(
         string $query_reference,
         string $third_party_reference

@@ -1,30 +1,58 @@
-
 let links = {
 	order_page: '',
 	application_domain: ''
 };
-
-
-
+const VODACOM_PHONE_NUMBER_REGEX = /^(\+|00)?(258)?((84|85)\d{7})$/
+const responseCodes = {
+	'INS-1': 'Internal Error',
+	'INS-2': 'Invalid API Key',
+	'INS-4': 'User is not active',
+	'INS-5': 'Transaction cancelled by customer',
+	'INS-6': 'Transaction Failed',
+	'INS-9': 'Request timeout',
+	'INS-10': 'Duplicate Transaction',
+	'INS-13': 'Invalid Shortcode Used',
+	'INS-14': 'Invalid Reference Used',
+	'INS-15': 'Invalid Amount Used',
+	'INS-16': 'Unable to handle the request due to a temporary overloading',
+	'INS-17 ': 'Invalid Transaction Reference. Length Should Be Between 1 and 20.',
+	'INS-18': 'Invalid TransactionID Used',
+	'INS-19': 'Invalid ThirdPartyReference Used',
+	'INS-20': 'Not All Parameters Provided. Please try again.',
+	'INS-21': 'Parameter validations failed. Please try again.',
+	'INS-22': 'Invalid Operation Type',
+	'INS-23': 'Unknown Status. Contact M-Pesa Support',
+	'INS-24': 'Invalid InitiatorIdentifier Used',
+	'INS-25': 'Invalid SecurityCredential Used',
+	'INS-26': 'Not authorized',
+	'INS-993': 'Direct Debit Missing',
+	'INS-994': 'Direct Debit Already Exists',
+	'INS-995': "Customer's Profile Has Problems",
+	'INS-996': 'Customer Account Status Not Active',
+	'INS-997': 'Linking Transaction Not Found',
+	'INS-998': 'Invalid Market',
+	'INS-2001': 'Initiator authentication error.',
+	'INS-2002': 'Receiver invalid.',
+	'INS-2005': 'Rule limited.',
+	'INS-2006': 'Insufficient balance',
+	'INS-2051': 'MSISDN invalid.',
+	'INS-2057': 'Language code invalid.',
+}
 async function initializePayment(encrypted_data, linksResponse){
-
-    console.log(JSON.parse(linksResponse));
 	links.application_domain = JSON.parse(linksResponse)['application_domain'];
 	links.order_page = JSON.parse(linksResponse)['order_page'];
-
-	let dados = JSON.parse(window.atob(encrypted_data));
+	let userData = JSON.parse(window.atob(encrypted_data));
 
 	await Swal.fire({
 		title: 'Confirme o número  a ser usado',
 		input: 'number',
 		type: 'question',
-		inputValue: dados['tel'],
+		inputValue: userData['tel'],
 		allowOutsideClick: false,
 		confirmButton: 'OK',
 		showCancelButton: true,
-		inputValidator: (numero) => {
-
-			if (!numero.match(/^(85|84)[0-9]{7}$/)){
+		inputValidator: (number) => {
+			if (!number.match(VODACOM_PHONE_NUMBER_REGEX)){
 				return "Introduza um número válido";
 			}
 		}
@@ -33,134 +61,89 @@ async function initializePayment(encrypted_data, linksResponse){
             this.processPayment(response.value, encrypted_data, links.application_domain);
             console.log(response.value);
 		}else{
-            console.log("canelado");
+            console.log("cancelado");
             console.log(response);
 		}
 	});
-
 }
 
-
 function processPayment(numero, encrypted_data) {
-    this.showLoading();
-	axios.defaults.headers.post['Accepts'] = 'application/json';
-	axios.defaults.headers.post['Content-Type'] = 'application/json';
-
-	axios.post(links.application_domain +'/?initialize_payment=1',
-        {
-            'numero': numero,
-    		'encrypted_data': encrypted_data,
-			headers: {
-                'Content-Type': 'application/json',
-				'Accepts': 'application/json'
-			}
-        }).then((response) => {
-
-			if(response.status === 200){
-                Swal.close();
-
-                console.log(response);
-
-                let responseData = JSON.parse(response.data);
-
-				console.log(responseData);
-				this.showMessageToUser(responseData);
-
-			}else{
-				console.error("show error message");
-			}
-
-		}).catch((error) => {
+	this.showLoading();
+	fetch(`${links.application_domain}/?initialize_payment=1`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			'Accept': 'application/json'
+		},
+		body: JSON.stringify({
+			numero,
+			encrypted_data,
+		})
+	}).then(response => {
+		if (response.ok) {
+			return response.json();
+		} else {
+			console.error("show error message");
+			throw new Error('Network response was not ok.');
+		}
+	}).then(responseData => {
 			Swal.close();
-        	this.disableButton(false);
-        	this.showErrorMessage("Ocorreu um error inesperado");
-        	console.log(error);
-			if(error.response){
-				//the request was made and the server responsed with a status code
+			console.log(responseData);
+			this.showMessageToUser(responseData);
+		}).catch(error => {
+			Swal.close();
+			this.disableButton(false);
+			this.showErrorMessage("Ocorreu um erro inesperado");
+			console.log(error);
+			if (error.response) {
 				console.log({errorResponse: error.response.data});
 				console.log({errorStatus: error.response.status});
 				console.log({errorHeaders: error.response.headers});
-			}else if(error.request) {
-				//The request was made, but no response was rescieved
+			} else if (error.request) {
 				console.log({errorRequest: error});
-			}else{
-				//Something happened in setting up the request
+			} else {
 				console.log({errorMessage: error.message});
 			}
 		});
-
 }
 
 
-function showMessageToUser(response){
-    this.disableButton(false);
-	switch (response['output_ResponseCode']) {
-
-		case 'INS-0' : {
-			this.showSucessMessage("Pagemento efectuado com Sucesso", response['output_ResponseCode'], response['output_ResponseDesc ']);
-            this.disableButton(true);
-		}break;
-
-		case 'INS-5' : {
-			this.showErrorMessage("Transação Cancelada pelo Cliente");
-		}break;
-
-		case 'INS-9' : {
-            this.showErrorMessage("A transação levou muito tempo, Tente Novamente");
-		}break;
-
-		case 'INS-10' : {
-            this.showErrorMessage("A transação já está em andameto, Aguarde um momento");
-        }break;
-
-		case 'INS-2001' : {
-            this.showErrorMessage("PIN Errado, Tente Novamente");
-		}break;
-
-		case 'INS-2006' : {
-            this.showErrorMessage("Não possui saldo suficiente para efectual a compra");
-		}break;
-
-		case 'INS-996' : {
-            this.showErrorMessage("Conta Mpesa do cliente não está activa");
-		}break;
-
-		case 'INS-6' : {
-            this.showErrorMessage("A transação falhou, tente novamente");
-		}break;
-
-		default: {
-            this.showErrorMessage("Ocorreu um erro Inesperado, Tente Novamente");
-		}
+function showMessageToUser(response) {
+	this.disableButton(false);
+	if (responseCodes[response['output_ResponseCode']] && response['output_ResponseCode'] !== 'INS-0') {
+		this.showErrorMessage(responseCodes[response['output_ResponseCode']]);
+	} else if (response['output_ResponseCode'] === 'INS-0') {
+		this.showSuccessMessage("Pagamento efectuado com Sucesso", response['output_ResponseCode'], response['output_ResponseDesc ']);
+		this.disableButton(true);
+	} else {
+		this.showErrorMessage("Ocorreu um erro Inesperado, Tente Novamente");
 	}
-
 }
 
 
-function showSucessMessage(mensagem, responseCode, responseDescripton){
+function showSuccessMessage(message, responseCode, responseDescription){
     Swal.fire({
-        title: mensagem,
+        title: message,
         allowOutsideClick: false,
 		confirmButtonText: 'Finalizar',
         html: 'Parabens, click <strong>Finalizar</strong> para continuar',
         type: 'success',
     }).then(function () {
-        this.finalizePayment(responseCode, responseDescripton );
+        this.finalizePayment(responseCode, responseDescription );
     });
 }
 
-function showErrorMessage(mensagem){
+function showErrorMessage(message){
 	Swal.fire({
-		title: mensagem,
+		title: message,
 		text: 'Tente Novamente, por favor',
 		type: 'error',
         allowOutsideClick: false,
-
 	});
 }
 
 /**
- * Finaliza o Pgamento
+ * Finaliza o Pagamento
  */
 function finalizePayment(code, description){
 
@@ -173,19 +156,27 @@ function finalizePayment(code, description){
         }
     });
     console.log('Processado');
-    axios.post(links.application_domain + "/?payment_action", {
-        code: code,
-        description: description
-    }).then((response) => {
-        Swal.close();
-        if(response.status === 200){
-            window.location.href = links.order_page;
-        }
-    }).catch((error) => {
-        Swal.close();
-        console.log(error);
-        this.showErrorMessage("Ocorreu algum erro ao Finalizar");
-    });
+	fetch(`${links.application_domain}/?payment_action`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			code: code,
+			description: description,
+		}),
+	}).then(response => {
+		if (response.ok) {
+			Swal.close();
+			window.location.href = links.order_page;
+		} else {
+			throw new Error('Network response was not ok.');
+		}
+	}).catch(error => {
+		Swal.close();
+		console.log(error);
+		this.showErrorMessage("Ocorreu algum erro ao Finalizar");
+	});
 }
 
 
